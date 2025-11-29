@@ -1,0 +1,647 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hotel Dulcee — Purchasing System</title>
+
+  <!-- Theme font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <img src="{% static 'logo.png' %}" alt="Hotel Dulcee Logo" id="logo" class="logo">
+      <div class="title">
+        <h1>HOTEL DULCEE</h1>
+        <div class="subtitle">Requisition_Inventory_Purchasing System</div>
+      </div>
+    </header>
+
+
+
+    <!-- HOMEPAGE -->
+    <main class="container">
+      <section id="home" class="card active">
+        <h2 class="center">Procurement Suite</h2>
+        <p class="center small">Hospitality refined- within and beyond our walls.</p>
+
+        <div class="modules">
+          <button class="module" onclick="showModule('po')">
+            <div class="module-title">Purchase Order</div>
+            <div class="module-sub">Create and manage P.O.s</div>
+          </button>
+
+          <button class="module" onclick="showModule('rp')">
+            <div class="module-title">Request for Payment</div>
+            <div class="module-sub">Request payments</div>
+          </button>
+
+          <button class="module" onclick="showModule('pr')">
+            <div class="module-title">Purchase Requisition</div>
+            <div class="module-sub">Internal requisitions</div>
+          </button>
+        </div>
+      </section>
+
+      <!-- LIST PANELS -->
+      <section id="panel-po" class="card panel" style="display:none">
+        <div class="panel-top">
+          <button class="link" onclick="goHome()">← Back</button>
+          <div class="right">
+            <button class="btn" onclick="openCreate('po')">+ New PO</button>
+          </div>
+        </div>
+
+        <div class="filters">
+          <select id="po-filter" onchange="renderList('po')">
+            <option value="all">All</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+
+          <input id="po-from" type="date" onchange="renderList('po')" placeholder="From">
+          <input id="po-to" type="date" onchange="renderList('po')" placeholder="To">
+
+          <input id="po-search" type="search" oninput="renderList('po')" placeholder="Search supplier or PO No" class="filter-wide">
+
+          <input id="po-dept-search" type="search" oninput="renderList('po')" placeholder="Search department">
+        </div>
+
+        <div id="po-list-area"></div>
+      </section>
+
+      <section id="panel-rp" class="card panel" style="display:none">
+        <div class="panel-top">
+          <button class="link" onclick="goHome()">← Back</button>
+          <div class="right">
+            <button class="btn" onclick="openCreate('rp')">+ New Request Payment</button>
+          </div>
+        </div>
+
+        <div class="filters">
+          <select id="rp-filter" onchange="renderList('rp')">
+            <option value="all">All</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+          <input type="date" id="rp-from" onchange="renderList('rp')">
+          <input type="date" id="rp-to" onchange="renderList('rp')">
+          <input placeholder="Search payee or No" id="rp-search" oninput="renderList('rp')">
+          <input placeholder="Search department" id="rp-dept-search" oninput="renderList('rp')">
+        </div>
+
+        <div id="rp-list-area"></div>
+      </section>
+
+      <section id="panel-pr" class="card panel" style="display:none">
+        <div class="panel-top">
+          <button class="link" onclick="goHome()">← Back</button>
+          <div class="right">
+            <button class="btn" onclick="openCreate('pr')">+ New Purchase Requisition</button>
+          </div>
+        </div>
+
+        <div class="filters">
+          <select id="pr-filter" onchange="renderList('pr')">
+            <option value="all">All</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+          <input type="date" id="pr-from" onchange="renderList('pr')">
+          <input type="date" id="pr-to" onchange="renderList('pr')">
+          <input placeholder="Search requester or No" id="pr-search" oninput="renderList('pr')">
+          <input placeholder="Search department" id="pr-dept-search" oninput="renderList('pr')">
+        </div>
+
+        <div id="pr-list-area"></div>
+      </section>
+
+      <!-- FORMS -->
+      <!-- Purchase Order Form -->
+      <section id="form-po" class="card form-card" style="display:none">
+        <div class="panel-top">
+          <h3>Purchase Order</h3>
+          <button class="btn primary" onclick="closeForm()">Back</button>
+        </div>
+
+        <div class="form-body">
+          <div class="form-group">
+            <label>PO No.:</label>
+            <input type="text" id="po-no" readonly>
+          </div>
+
+          <div class="form-group">
+            <label>Date:</label>
+            <input type="date" id="po-date">
+          </div>
+
+          <div class="form-group">
+            <label>Department:</label>
+            <input id="po-dept" placeholder="e.g., Housekeeping">
+          </div>
+
+          <div class="form-group">
+            <label>Supplier's Name:</label>
+            <input id="po-supplier">
+          </div>
+
+          <div class="form-group">
+            <label>TIN #:</label>
+            <input id="po-tin">
+          </div>
+
+          <div class="form-group">
+            <label>Address:</label>
+            <input id="po-address">
+          </div>
+
+          <div class="form-group">
+            <label>Contact Person:</label>
+            <input id="po-contact-person">
+          </div>
+
+          <div class="form-group">
+            <label>Contact Number:</label>
+            <input id="po-contact-number">
+          </div>
+
+          <h4 style="margin-top:16px; margin-bottom:8px; font-weight:600;">Items</h4>
+
+          <table class="items-table" style="width:100%; border-collapse:collapse; margin-bottom:12px;">
+            <thead>
+              <tr style="background:#f0f0f0;">
+                <th style="border:1px solid #ccc; padding:8px; text-align:left;">Qty</th>
+                <th style="border:1px solid #ccc; padding:8px; text-align:left;">Unit</th>
+                <th style="border:1px solid #ccc; padding:8px; text-align:left;">Item Description</th>
+                <th style="border:1px solid #ccc; padding:8px; text-align:left;">Unit Cost</th>
+                <th style="border:1px solid #ccc; padding:8px; text-align:left;">Amount</th>
+                <th style="border:1px solid #ccc; padding:8px; width:60px;"></th>
+              </tr>
+            </thead>
+            <tbody id="po-items"></tbody>
+          </table>
+
+          <button class="btn secondary" onclick="poAddItem()" style="margin-bottom:12px;">+ Add Item</button>
+
+          <div style="background:#f9f9f9; padding:12px; border-radius:4px; margin-bottom:12px;">
+            <div style="text-align:right; font-size:14px; font-weight:600;">
+              TOTAL: <span id="po-total">₱ 0.00</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Prepared By:</label>
+            <input id="po-prepared-by">
+          </div>
+
+          <div class="form-group">
+            <label>Checked By:</label>
+            <input id="po-checked-by">
+          </div>
+
+          <div class="form-group">
+            <label>Approved By:</label>
+            <input id="po-approved-by">
+          </div>
+
+          <div class="form-actions">
+            <button class="btn primary" onclick="savePO()">Save</button>
+            <button class="btn secondary" onclick="generatePOPdfFromForm()">Preview PDF</button>
+            <button class="btn secondary" onclick="closeForm()">Cancel</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Request for Payment Form -->
+      <section id="form-rp" class="card form-card" style="display:none">
+        <div class="panel-top">
+          <h3>Request For Payment</h3>
+          <button class="btn primary" onclick="closeForm()">Back</button>
+        </div>
+
+        <div class="form-body">
+          <div class="form-group">
+            <label>RP No.:</label>
+            <input type="text" id="rp-no" readonly>
+          </div>
+
+          <div class="form-group">
+            <label>Payee:</label>
+            <input type="text" id="rp-payee" required>
+          </div>
+
+          <div class="form-group">
+            <label>Date:</label>
+            <input type="date" id="rp-date" required>
+          </div>
+
+          <div class="form-group">
+            <label>TIN #:</label>
+            <input type="text" id="rp-tin">
+          </div>
+
+          <!-- ACTION REQUIRED -->
+          <div class="form-group">
+            <label><b>ACTION REQUIRED</b></label>
+            <div class="checkbox-group">
+              <label><input type="radio" name="rp-action" value="URGENT"> URGENT</label>
+              <label><input type="radio" name="rp-action" value="NON-URGENT"> NON-URGENT</label>
+            </div>
+          </div>
+
+          <!-- MODE OF PAYMENT -->
+          <div class="form-group">
+            <label><b>MODE OF PAYMENT</b></label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" class="rp-mode" value="CHECK"> CHECK</label>
+              <label><input type="checkbox" class="rp-mode" value="CASH"> CASH</label>
+              <label><input type="checkbox" class="rp-mode" value="BANK TRANSFER"> BANK TRANSFER</label>
+              <label><input type="checkbox" class="rp-mode" value="ONLINE"> ONLINE (CC, GCASH, PMY)</label>
+            </div>
+          </div>
+
+          <!-- PAYMENT FOR -->
+          <div class="form-group">
+            <label><b>PAYMENT FOR</b></label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" class="rp-payment-for" value="SUPPLIER"> SUPPLIER</label>
+              <label><input type="checkbox" class="rp-payment-for" value="MACHINERY"> MACHINERY</label>
+              <label><input type="checkbox" class="rp-payment-for" value="REPAIR & MAINTENANCE"> REPAIR & MAINTENANCE</label>
+              <label><input type="checkbox" class="rp-payment-for" value="UTILITY"> UTILITY</label>
+              <label><input type="checkbox" class="rp-payment-for" value="OTHERS"> OTHERS</label>
+            </div>
+            <input type="text" id="rp-payment-for-other" placeholder="Specify if OTHERS">
+          </div>
+
+          <div class="form-group">
+            <label>Amount:</label>
+            <input type="number" id="rp-amount" step="0.01" required>
+          </div>
+
+          <div class="form-group">
+            <label>Remarks:</label>
+            <textarea id="rp-remarks" rows="3"></textarea>
+          </div>
+
+          <!-- INVOICE UPLOAD (stores image but NOT included in PDF) -->
+          <div class="form-group">
+            <label><b>Invoice (optional)</b></label>
+            <div id="rp-invoice-preview" style="margin-bottom:8px;">
+              <img id="rp-invoice-img" alt="Invoice preview" style="max-width:360px; max-height:260px; border:1px solid #ccc; display:none;">
+            </div>
+            <input type="file" id="rp-invoice-file" accept="image/*" onchange="previewRPInvoice()">
+            <button type="button" class="btn secondary" onclick="clearRPInvoice()" style="margin-left:8px;">Clear</button>
+            <div class="small" style="margin-top:6px;">Max 5MB. Image is stored with the RFP but not embedded into the generated PDF.</div>
+          </div>
+
+          <div class="form-group">
+            <label>Requested By:</label>
+            <input type="text" id="rp-requested-by">
+          </div>
+
+          <div class="form-group">
+            <label>Checked By:</label>
+            <input type="text" id="rp-checked-by">
+          </div>
+
+          <div class="form-group">
+            <label>Recommending Approval:</label>
+            <input type="text" id="rp-recommend-approval">
+          </div>
+
+          <div class="form-group">
+            <label>Approved By:</label>
+            <input type="text" id="rp-approved-by">
+          </div>
+
+          <div class="form-actions">
+            <button class="btn primary" onclick="saveRP()">Save</button>
+            <button class="btn secondary" onclick="generateRPPdfFromForm()">Preview PDF</button>
+            <button class="btn secondary" onclick="closeForm()">Cancel</button>
+          </div>
+        </div>
+      </section>
+  
+      <!-- Invoice preview modal (hidden) -->
+      <div id="invoice-modal" style="display:none;position:fixed;z-index:9999;inset:0;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;padding:24px;">
+        <div style="max-width:1000px;width:100%;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.4);">
+          <div style="display:flex;justify-content:flex-end;padding:8px;background:#f6f6f6;">
+            <button onclick="closeInvoiceModal()" class="btn">Close</button>
+          </div>
+          <div style="padding:12px; text-align:center;">
+            <img id="invoice-modal-img" src="" alt="Invoice" style="max-width:100%; max-height:80vh; border:1px solid #ddd;">
+            <div style="margin-top:8px;">
+              <a id="invoice-modal-download" href="#" target="_blank" class="btn">Open / Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Purchase Requisition Form -->
+      <section id="form-pr" class="card form-card" style="display:none">
+        <div class="panel-top">
+          <h3>Purchase Requisition</h3>
+          <button class="btn primary" onclick="closeForm()">Back</button>
+        </div>
+
+        <div class="form-body">
+          <div class="form-group">
+            <label>MRF No.:</label>
+            <input type="text" id="pr-no" readonly>
+          </div>
+
+          <div class="form-group">
+            <label>Date:</label>
+            <input type="date" id="pr-date">
+          </div>
+
+          <div class="form-group">
+            <label>Requisitioner:</label>
+            <input id="pr-requester">
+          </div>
+
+          <div class="form-group">
+            <label>Department:</label>
+            <input id="pr-dept">
+          </div>
+
+          <div class="form-group">
+            <label>Date Needed:</label>
+            <input type="date" id="pr-needed">
+          </div>
+
+          <div class="form-group">
+            <label>Remarks:</label>
+            <textarea id="pr-remarks" rows="3"></textarea>
+          </div>
+
+          <h4 style="margin-top:16px; margin-bottom:8px; font-weight:600;">Items</h4>
+
+          <table class="items-table" style="width:100%; border-collapse:collapse; margin-bottom:12px;">
+            <thead>
+              <tr style="background:#f0f0f0;">
+                <th style="border:1px solid #ccc; padding:8px; text-align:left;">STK No.</th>
+                <th style="border:1px solid #ccc; padding:8px; text-align:left;">Qty</th>
+                <th style="border:1px solid #ccc; padding:8px; text-align:left;">Unit</th>
+                <th style="border:1px solid #ccc; padding:8px; text-align:left;">Item Description</th>
+                <th style="border:1px solid #ccc; padding:8px; text-align:left;">Remarks</th>
+                <th style="border:1px solid #ccc; padding:8px; width:60px;"></th>
+              </tr>
+            </thead>
+            <tbody id="pr-items"></tbody>
+          </table>
+
+          <button class="btn secondary" onclick="prAddItem()" style="margin-bottom:12px;">+ Add Item</button>
+
+          <div class="form-actions">
+            <button class="btn primary" onclick="savePR()">Save</button>
+            <button class="btn secondary" onclick="generatePRPdfFromForm()">Preview PDF</button>
+            <button class="btn secondary" onclick="closeForm()">Cancel</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="footer">© Hotel Dulcee | Requisition_Inventory_Purchasing System</footer>
+  </div>
+
+  <!-- HTML2PDF Templates (hidden) -->
+
+<!-- Purchase Order Print Template -->
+<div id="print-po" style="display:none; padding:10px; font-family:Arial; background:white; width:7.4in; box-sizing:border-box; font-size:10.5px; margin:0 auto;">
+
+  <!-- Header -->
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+    <img src="{% static 'logo.png' %}" style="width:40px; height:auto;">
+    <div>
+      <div style="font-size:14px; font-weight:bold;">HOTEL DULCEE</div>
+      <div style="font-size:9px;">Brgy. Colon, City of Naga, Cebu</div>
+    </div>
+  </div>
+
+  <!-- Title -->
+  <h2 style="text-align:center; margin:4px 0; font-size:12px; font-weight:bold;">PURCHASE ORDER</h2>
+
+  <!-- PO Info (Right-aligned) -->
+  <div style="text-align:right; margin-bottom:6px; line-height:1.3; font-size:9px;">
+    <div><b>P.O.NO.:</b> <span id="p_po_no"></span></div>
+    <div><b>DATE:</b> <span id="p_po_date"></span></div>
+    <div><b>DEPARTMENT:</b> <span id="p_po_dept"></span></div>
+  </div>
+
+  <!-- Supplier Info -->
+  <div style="margin-bottom:6px; line-height:1.3; font-size:9px;">
+    <div><b>Supplier Name</b>&nbsp;<span style="border-bottom:1px solid #000; display:inline-block; width:220px;"><span id="p_po_supplier"></span></span></div>
+    <div><b>TIN #</b>&nbsp;<span style="border-bottom:1px solid #000; display:inline-block; width:220px;"><span id="p_po_tin"></span></span></div>
+    <div><b>Address</b>&nbsp;<span style="border-bottom:1px solid #000; display:inline-block; width:220px;"><span id="p_po_address"></span></span></div>
+    <div><b>Contact Person</b>&nbsp;<span style="border-bottom:1px solid #000; display:inline-block; width:220px;"><span id="p_po_contact_person"></span></span></div>
+    <div><b>Contact Number</b>&nbsp;<span style="border-bottom:1px solid #000; display:inline-block; width:220px;"><span id="p_po_contact_number"></span></span></div>
+  </div>
+
+  <!-- Items Table (narrower) -->
+  <table style="width:100%; max-width:7.0in; margin:0 auto; border-collapse:collapse; font-size:9px;">
+    <thead>
+      <tr style="height:16px;">
+        <th style="border:1px solid #000; padding:3px; width:7%; text-align:center; font-size:8.5px; color:#000; background:#fff;">STK No.</th>
+        <th style="border:1px solid #000; padding:3px; width:6%; text-align:center; font-size:8.5px; color:#000; background:#fff;">Qty</th>
+        <th style="border:1px solid #000; padding:3px; width:7%; text-align:center; font-size:8.5px; color:#000; background:#fff;">Unit</th>
+        <th style="border:1px solid #000; padding:3px; text-align:left; font-size:8.5px; color:#000; background:#fff;">Item Description</th>
+        <th style="border:1px solid #000; padding:3px; width:12%; text-align:right; font-size:8.5px; color:#000; background:#fff;">Unit Cost</th>
+        <th style="border:1px solid #000; padding:3px; width:12%; text-align:right; font-size:8.5px; color:#000; background:#fff;">Sub-Total</th>
+      </tr>
+    </thead>
+    <tbody id="p_po_items"></tbody>
+  </table>
+
+  <!-- Total -->
+  <div style="text-align:right; margin-top:6px; font-size:9.5px; font-weight:bold;">
+    TOTAL: <span id="p_po_total">₱ 0.00</span>
+  </div>
+
+  <!-- Nothing Follows -->
+  <div style="text-align:center; margin-top:8px; font-size:9px;">
+    *** NOTHING FOLLOWS ***
+  </div>
+
+  <!-- Signatures -->
+  <div style="display:flex; justify-content:space-around; margin-top:30px; font-size:9px;">
+    <div style="text-align:center; width:30%;">
+      
+      <div style="font-weight:bold;">Prepared by:</div>
+      <div style="border-top:1px solid #000; width:100%; margin-top:4px; height:10px;"></div>
+      <div style="font-size:8px;"><span id="p_po_prepared"></span></div>
+    </div>
+    <div style="text-align:center; width:30%;">
+      
+      <div style="font-weight:bold;">Checked by:</div>
+      <div style="border-top:1px solid #000; width:100%; margin-top:4px; height:10px;"></div>
+      <div style="font-size:8px;"><span id="p_po_checked"></span></div>
+    </div>
+    <div style="text-align:center; width:30%;">
+      
+      <div style="font-weight:bold;">Approved by:</div>
+      <div style="border-top:1px solid #000; width:100%; margin-top:4px; height:10px;"></div>
+      <div style="font-size:8px;"><span id="p_po_approved"></span></div>
+    </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Request for Payment Print Template -->
+<div id="print-rp" style="display:none; padding:20px; font-family:Arial; background:white; width:210mm;">
+  <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px;">
+    <img src="{% static 'logo.png' %}" style="width:60px; height:auto;">
+    <div>
+      <div style="font-size:18px; font-weight:bold;">HOTEL DULCEE</div>
+      <div style="font-size:11px;">Brgy. Colon, City of Naga, Cebu</div>
+    </div>
+  </div>
+
+  <h2 style="text-align:center; margin:10px 0; font-size:16px;">REQUEST FOR PAYMENT</h2>
+
+  <table style="width:100%; font-size:12px; margin-bottom:20px; border-collapse:collapse;">
+    <tr>
+      <td style="width:50%;"><b>Payee:</b> <span id="p_rp_payee"></span></td>
+      <td style="text-align:right;"><b>RP No.:</b> <span id="p_rp_no"></span></td>
+    </tr>
+    <tr>
+      <td><b>Date:</b> <span id="p_rp_date"></span></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><b>TIN #:</b> <span id="p_rp_tin"></span></td>
+      <td></td>
+    </tr>
+  </table>
+
+  <table style="width:100%; font-size:12px; margin-bottom:15px; border-collapse:collapse;">
+    <tr><td style="width:25%;"><b>ACTION REQUIRED</b></td></tr>
+    <tr><td><span class="rp-action-check">☐</span> URGENT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="rp-action-check2">☐</span> NON-URGENT</td></tr>
+  </table>
+
+  <table style="width:100%; font-size:12px; margin-bottom:15px; border-collapse:collapse;">
+    <tr><td style="width:25%;"><b>MODE OF PAYMENT</b></td></tr>
+    <tr><td><span class="rp-mode-check">☐</span> CHECK &nbsp;&nbsp;<span class="rp-mode-check">☐</span> CASH &nbsp;&nbsp;<span class="rp-mode-check">☐</span> BANK TRANSFER &nbsp;&nbsp;<span class="rp-mode-check">☐</span> ONLINE (CC, GCASH, PMY)</td></tr>
+  </table>
+
+  <table style="width:100%; font-size:12px; margin-bottom:15px; border-collapse:collapse;">
+    <tr><td style="width:25%;"><b>PAYMENT FOR</b></td></tr>
+    <tr><td><span class="rp-payment-check">☐</span> SUPPLIER &nbsp;&nbsp;<span class="rp-payment-check">☐</span> MACHINERY &nbsp;&nbsp;<span class="rp-payment-check">☐</span> REPAIR & MAINTENANCE &nbsp;&nbsp;<span class="rp-payment-check">☐</span> UTILITY &nbsp;&nbsp;<span class="rp-payment-check">☐</span> OTHERS</td></tr>
+    <tr><td style="border-bottom:1px solid #000; padding:3px;"></td></tr>
+  </table>
+
+  <div style="font-size:12px; margin-bottom:15px;">
+    <b>Amount:</b> <span id="p_rp_amount">₱ 0.00</span>
+  </div>
+
+  <div style="font-size:12px; margin-bottom:15px;">
+    <b>Remarks:</b> <span id="p_rp_remarks"></span>
+  </div>
+
+  <div style="font-size:10px; margin-bottom:20px; font-style:italic;">
+    Note: Attached any document as needed
+  </div>
+
+  <div style="display:flex; justify-content:space-around; margin-top:50px; font-size:11px;">
+    <div style="text-align:center; width:30%;">
+      <div style="border-top:2px solid #000; width:100%; margin-bottom:5px; height:40px;"></div>
+      <div style="font-weight:bold;">Requested By:</div>
+      <div id="p_rp_requested" style="font-size:10px;"></div>
+    </div>
+    <div style="text-align:center; width:30%;">
+      <div style="border-top:2px solid #000; width:100%; margin-bottom:5px; height:40px;"></div>
+      <div style="font-weight:bold;">Checked By:</div>
+      <div id="p_rp_checked" style="font-size:10px;"></div>
+    </div>
+    <div style="text-align:center; width:30%;">
+      <div style="border-top:2px solid #000; width:100%; margin-bottom:5px; height:40px;"></div>
+      <div style="font-weight:bold;">Recommending Approval:</div>
+      <div id="p_rp_recommend" style="font-size:10px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Purchase Requisition Print Template -->
+<div id="print-pr" style="display:none; padding:20px; font-family:Arial; background:white; width:210mm;">
+  <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px;">
+    <img src="{% static 'logo.png' %}" style="width:60px; height:auto;">
+    <div>
+      <div style="font-size:18px; font-weight:bold;">HOTEL DULCEE</div>
+      <div style="font-size:11px;">Brgy. Colon, City of Naga, Cebu</div>
+    </div>
+  </div>
+
+  <h2 style="text-align:center; margin:10px 0; font-size:16px;">PURCHASE REQUISITION FORM</h2>
+
+  <table style="width:100%; font-size:12px; margin-bottom:15px; border-collapse:collapse;">
+    <tr>
+      <td style="width:50%;"><b>Requisitioner:</b> <span id="p_pr_requester"></span></td>
+      <td style="text-align:right;"><b>MRF NO.:</b> <span id="p_pr_no"></span></td>
+    </tr>
+    <tr>
+      <td><b>Department:</b> <span id="p_pr_dept"></span></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><b>Date Needed:</b> <span id="p_pr_date_needed"></span></td>
+      <td></td>
+    </tr>
+  </table>
+
+  <table style="width:100%; border-collapse:collapse; font-size:11px; margin:15px 0;">
+    <thead>
+      <tr style="background:#d3d3d3;">
+        <th style="border:1px solid #000; padding:6px; width:12%;">STK No.</th>
+        <th style="border:1px solid #000; padding:6px; width:10%;">Qty</th>
+        <th style="border:1px solid #000; padding:6px; width:12%;">Unit</th>
+        <th style="border:1px solid #000; padding:6px;">Item Description</th>
+        <th style="border:1px solid #000; padding:6px; width:15%;">Remarks</th>
+      </tr>
+    </thead>
+    <tbody id="p_pr_items"></tbody>
+  </table>
+
+  <div style="display:flex; justify-content:space-around; margin-top:60px; font-size:11px;">
+    <div style="text-align:center; width:22%;">
+      <div style="border-top:2px solid #000; width:100%; margin-bottom:5px; height:40px;"></div>
+      <div style="font-weight:bold;">Requested By:</div>
+      <div style="font-size:10px;">Name and Signature</div>
+    </div>
+    <div style="text-align:center; width:22%;">
+      <div style="border-top:2px solid #000; width:100%; margin-bottom:5px; height:40px;"></div>
+      <div style="font-weight:bold;">Checked By:</div>
+      <div style="font-size:10px;">Name and Signature</div>
+    </div>
+    <div style="text-align:center; width:22%;">
+      <div style="border-top:2px solid #000; width:100%; margin-bottom:5px; height:40px;"></div>
+      <div style="font-weight:bold;">Recommending Approval:</div>
+      <div style="font-size:10px;">Name and Signature</div>
+    </div>
+    <div style="text-align:center; width:22%;">
+      <div style="border-top:2px solid #000; width:100%; margin-bottom:5px; height:40px;"></div>
+      <div style="font-weight:bold;">Approved by:</div>
+      <div style="font-size:10px;">Name and Signature</div>
+    </div>
+  </div>
+</div>
+
+  <!-- html2pdf library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+
+  <!-- JS -->
+  <script src="{% static 'script.js' %}"></script>
+</body>
+</html>
