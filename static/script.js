@@ -1351,7 +1351,6 @@ function generatePRPdfFromForm() {
   }
 
   document.getElementById("p_pr_no").textContent = document.getElementById("pr-no").value || '';
-  document.getElementById("p_pr_remarks").textContent = document.getElementById("pr-remarks").value || '';
   document.getElementById("p_pr_requester").textContent = document.getElementById("pr-requester").value || '';
   document.getElementById("p_pr_dept").textContent = document.getElementById("pr-dept").value || '';
   document.getElementById("p_pr_date_needed").textContent = document.getElementById("pr-needed").value || '';
@@ -1372,15 +1371,35 @@ function generatePRPdfFromForm() {
     const remark = row.querySelector(".pr-remark")?.value || '';
 
     const tr = document.createElement('tr');
+    tr.style.height = '16px';
     tr.innerHTML = `
-      <td style="border:1px solid #000; padding:6px;">${stk}</td>
-      <td style="border:1px solid #000; padding:6px; text-align:center;">${qty}</td>
-      <td style="border:1px solid #000; padding:6px; text-align:center;">${unit}</td>
-      <td style="border:1px solid #000; padding:6px;">${desc}</td>
-      <td style="border:1px solid #000; padding:6px;">${remark}</td>
+      <td style="padding:2px 4px; text-align:center; font-size:8.5px; border:1px solid #000;">${stk}</td>
+      <td style="padding:2px 4px; text-align:center; font-size:8.5px; border:1px solid #000;">${qty}</td>
+      <td style="padding:2px 4px; text-align:center; font-size:8.5px; border:1px solid #000;">${unit}</td>
+      <td style="padding:2px 4px; font-size:8.5px; border:1px solid #000;">${desc}</td>
+      <td style="padding:2px 4px; font-size:8.5px; text-align:right; border:1px solid #000;">${''}</td>
+      <td style="padding:2px 4px; font-size:8.5px; text-align:right; border:1px solid #000;">${''}</td>
+      <td style="padding:2px 4px; font-size:8.5px; text-align:right; border:1px solid #000;">${''}</td>
     `;
     tbody.appendChild(tr);
   });
+
+  // add extra empty rows so final PDF density matches PO
+  const extraRows = 8;
+  for (let i = 0; i < extraRows; i++) {
+    const tr = document.createElement('tr');
+    tr.style.height = '16px';
+    tr.innerHTML = `
+      <td style="padding:2px 4px;"></td>
+      <td style="padding:2px 4px;"></td>
+      <td style="padding:2px 4px;"></td>
+      <td style="padding:2px 4px;"></td>
+      <td style="padding:2px 4px;"></td>
+      <td style="padding:2px 4px;"></td>
+      <td style="padding:2px 4px;"></td>
+    `;
+    tbody.appendChild(tr);
+  }
 
   print.style.display = 'block';
   print.style.visibility = 'visible';
@@ -1669,12 +1688,15 @@ async function downloadPRFromDB(id) {
         items.forEach(it => {
           if (typeof prAddItem === 'function') prAddItem(it.stk || '', it.qty || 0, it.unit || '', it.desc || it.description || '', it.remark || it.remarks || '');
           const tr = document.createElement('tr');
+          tr.style.height = '16px';
           tr.innerHTML = `
-            <td style="border:1px solid #000; padding:6px;">${it.stk || ''}</td>
-            <td style="border:1px solid #000; padding:6px; text-align:center;">${it.qty || ''}</td>
-            <td style="border:1px solid #000; padding:6px; text-align:center;">${it.unit || ''}</td>
-            <td style="border:1px solid #000; padding:6px;">${it.desc || it.description || ''}</td>
-            <td style="border:1px solid #000; padding:6px;">${it.remark || it.remarks || ''}</td>
+            <td style="padding:2px 4px; text-align:center; font-size:8.5px; border:1px solid #000;">${it.stk || ''}</td>
+            <td style="padding:2px 4px; text-align:center; font-size:8.5px; border:1px solid #000;">${it.qty || ''}</td>
+            <td style="padding:2px 4px; text-align:center; font-size:8.5px; border:1px solid #000;">${it.unit || ''}</td>
+            <td style="padding:2px 4px; font-size:8.5px; border:1px solid #000;">${it.desc || it.description || ''}</td>
+            <td style="padding:2px 4px; font-size:8.5px; text-align:right; border:1px solid #000;">${''}</td>
+            <td style="padding:2px 4px; font-size:8.5px; text-align:right; border:1px solid #000;">${''}</td>
+            <td style="padding:2px 4px; font-size:8.5px; text-align:right; border:1px solid #000;">${''}</td>
           `;
           tbody.appendChild(tr);
         });
