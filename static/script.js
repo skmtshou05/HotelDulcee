@@ -368,7 +368,7 @@ function poPrepare() {
   storage.setItem('hd_last_module', 'po');
 }
 
-function poAddItem(q=1, unit='pcs', desc='', cost=0) {
+function poAddItem(q=1, unit='pcs', desc='', cost=0, delDate='') {
   const tbody = document.getElementById('po-items');
   const tr = document.createElement('tr');
   tr.innerHTML = `
@@ -377,6 +377,7 @@ function poAddItem(q=1, unit='pcs', desc='', cost=0) {
     <td><input class="po-desc" value="${desc}"></td>
     <td><input class="po-cost" type="number" step="0.01" value="${cost.toFixed(2)}" oninput="updatePOTotal()"></td>
     <td class="po-sub">₱ 0.00</td>
+    <td><input class="po-del-date" type="date" value="${delDate}"></td>
     <td><button class="btn secondary" onclick="this.closest('tr').remove(); updatePOTotal()">Remove</button></td>
   `;
   tbody.appendChild(tr);
@@ -415,9 +416,10 @@ async function savePO() {
     const unit = row.querySelector('.po-unit').value || '';
     const description = row.querySelector('.po-desc').value || '';
     const unit_cost = parseFloat(row.querySelector('.po-cost').value || 0);
+    const del_date = row.querySelector('.po-del-date').value || '';
     const total = qty * unit_cost;
     
-    items.push({ qty, unit, description, unit_cost, total });
+    items.push({ qty, unit, description, unit_cost, total, del_date });
   });
 
   const total = items.reduce((sum, item) => sum + item.total, 0);
@@ -516,8 +518,8 @@ async function editPO(id) {
     if (itemsEl) itemsEl.innerHTML = '';
     if (Array.isArray(po.items) && po.items.length) {
       po.items.forEach(it => {
-        // poAddItem(q, unit, desc, cost)
-        poAddItem(it.qty || 0, it.unit || '', it.description || it.desc || '', Number(it.unit_cost || 0));
+        // poAddItem(q, unit, desc, cost, delDate)
+        poAddItem(it.qty || 0, it.unit || '', it.description || it.desc || '', Number(it.unit_cost || 0), it.del_date || '');
       });
     } else {
       poAddItem();
@@ -580,41 +582,47 @@ function generatePOPdfFromForm() {
   let total = 0;
 
   const rows = document.querySelectorAll("#po-items tr");
-  rows.forEach((row, idx) => {
-    const stk = idx + 1;
+  let stk = 1;
+  rows.forEach((row) => {
     const qty = row.querySelector(".po-qty")?.value || '0';
     const unit = row.querySelector(".po-unit")?.value || '';
     const desc = row.querySelector(".po-desc")?.value || '';
     const cost = parseFloat(row.querySelector(".po-cost")?.value || 0);
+    const delDate = row.querySelector(".po-del-date")?.value || '';
     const sub = parseFloat(qty) * cost;
-    total += sub;
-
-    const tr = document.createElement('tr');
-    tr.style.height = '16px';
-    tr.innerHTML = `
-      <td style="padding:2px 4px; text-align:center; font-size:8.5px;">${stk}</td>
-      <td style="padding:2px 4px; text-align:center; font-size:8.5px;">${qty}</td>
-      <td style="padding:2px 4px; text-align:center; font-size:8.5px;">${unit}</td>
-      <td style="padding:2px 4px; font-size:8.5px;">${desc}</td>
-      <td style="padding:2px 4px; text-align:right; font-size:8.5px;">₱ ${cost.toFixed(2)}</td>
-      <td style="padding:2px 4px; text-align:right; font-size:8.5px;">₱ ${sub.toFixed(2)}</td>
-    `;
-    // ensure cell borders inherit table borders (border-collapse will show complete box)
-    tbody.appendChild(tr);
+    
+    // Only add rows with data (not empty rows)
+    if (qty || desc || cost) {
+      total += sub;
+      const tr = document.createElement('tr');
+      tr.style.height = '16px';
+      tr.innerHTML = `
+        <td style="padding:2px 4px; text-align:center; font-size:8.5px; border:1px solid #000;">${stk}</td>
+        <td style="padding:2px 4px; text-align:center; font-size:8.5px; border:1px solid #000;">${qty}</td>
+        <td style="padding:2px 4px; text-align:center; font-size:8.5px; border:1px solid #000;">${unit}</td>
+        <td style="padding:2px 4px; font-size:8.5px; border:1px solid #000;">${desc}</td>
+        <td style="padding:2px 4px; text-align:right; font-size:8.5px; border:1px solid #000;">₱ ${cost.toFixed(2)}</td>
+        <td style="padding:2px 4px; text-align:right; font-size:8.5px; border:1px solid #000;">₱ ${sub.toFixed(2)}</td>
+        <td style="padding:2px 4px; text-align:center; font-size:8.5px; border:1px solid #000;">${delDate}</td>
+      `;
+      tbody.appendChild(tr);
+      stk++;
+    }
   });
 
-  // Add N empty rows (same style)
+  // Add empty rows with light borders
   const extraRows = 8;
   for (let i = 0; i < extraRows; i++) {
     const tr = document.createElement('tr');
     tr.style.height = '16px';
     tr.innerHTML = `
-      <td style="padding:2px;"></td>
-      <td style="padding:2px;"></td>
-      <td style="padding:2px;"></td>
-      <td style="padding:2px;"></td>
-      <td style="padding:2px;"></td>
-      <td style="padding:2px;"></td>
+      <td style="padding:2px; border-bottom:0.5px solid #ddd;"></td>
+      <td style="padding:2px; border-bottom:0.5px solid #ddd;"></td>
+      <td style="padding:2px; border-bottom:0.5px solid #ddd;"></td>
+      <td style="padding:2px; border-bottom:0.5px solid #ddd;"></td>
+      <td style="padding:2px; border-bottom:0.5px solid #ddd;"></td>
+      <td style="padding:2px; border-bottom:0.5px solid #ddd;"></td>
+      <td style="padding:2px; border-bottom:0.5px solid #ddd;"></td>
     `;
     tbody.appendChild(tr);
   }
@@ -982,7 +990,7 @@ async function downloadPOFromDB(id) {
     document.getElementById("po-items").innerHTML = '';
     if (Array.isArray(po.items) && po.items.length > 0) {
       po.items.forEach(it => {
-        poAddItem(it.qty || 0, it.unit || '', it.description || it.desc || '', Number(it.unit_cost || it.unit_cost || 0));
+        poAddItem(it.qty || 0, it.unit || '', it.description || it.desc || '', Number(it.unit_cost || it.unit_cost || 0), it.del_date || '');
       });
     }
 
