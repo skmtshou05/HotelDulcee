@@ -982,7 +982,6 @@ async function downloadPOFromDB(id) {
     document.getElementById("po-address").value = po.address || '';
     document.getElementById("po-contact-person").value = po.contact_person || '';
     document.getElementById("po-contact-number").value = po.contact_number || '';
-
     document.getElementById("po-prepared-by").value = po.prepared_by || '';
     document.getElementById("po-checked-by").value = po.checked_by || '';
     document.getElementById("po-approved-by").value = po.approved_by || '';
