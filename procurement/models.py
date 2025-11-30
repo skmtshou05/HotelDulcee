@@ -56,6 +56,10 @@ class PurchaseRequisition(models.Model):
     dept = models.CharField(max_length=128, blank=True)
     date_needed = models.DateField(blank=True, null=True)
     remarks = models.TextField(blank=True)
+    requested_by = models.CharField(max_length=128, blank=True)
+    checked_by = models.CharField(max_length=128, blank=True)
+    recommend_approval = models.CharField(max_length=128, blank=True)
+    approved_by = models.CharField(max_length=128, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

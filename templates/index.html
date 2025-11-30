@@ -404,6 +404,26 @@
 
           <button class="btn secondary" onclick="prAddItem()" style="margin-bottom:12px;">+ Add Item</button>
 
+          <div class="form-group">
+            <label>Requested By:</label>
+            <input type="text" id="pr-requested-by">
+          </div>
+
+          <div class="form-group">
+            <label>Checked By:</label>
+            <input type="text" id="pr-checked-by">
+          </div>
+
+          <div class="form-group">
+            <label>Recommending Approval:</label>
+            <input type="text" id="pr-recommend-approval">
+          </div>
+
+          <div class="form-group">
+            <label>Approved By:</label>
+            <input type="text" id="pr-approved-by">
+          </div>
+
           <div class="form-actions">
             <button class="btn primary" onclick="savePR()">Save</button>
             <button class="btn secondary" onclick="generatePRPdfFromForm()">Preview PDF</button>
@@ -602,7 +622,6 @@
   <h2 style="text-align:center; margin:10px 0; font-size:16px;">PURCHASE REQUISITION FORM</h2>
     <div style="text-align:right; margin-bottom:6px; line-height:1.3; font-size:12px;">
     <div><b>MRF NO.:</b> <span id="p_pr_no"></span></div>
-
   </div>
   <table style="width:100%; font-size:12px; margin-bottom:15px; border-collapse:collapse;">
     <tr>
@@ -617,6 +636,10 @@
       <td></td>
     </tr>
   </table>
+
+  <div style="font-size:12px; margin-bottom:10px;">
+    <b>Remarks:</b> <span id="p_pr_remarks"></span>
+  </div>
 
   <table style="width:100%; max-width:7.0in; margin:0 auto; border-collapse:collapse; font-size:9px;">
     <thead>
@@ -635,22 +658,22 @@
     <div style="text-align:center; width:22%;">
       <div style="border-top:2px solid #000; width:100%; margin-bottom:5px; height:40px;"></div>
       <div style="font-weight:bold;">Requested By:</div>
-      <div style="font-size:10px;">Name and Signature</div>
+      <div id="p_pr_requested" style="font-size:10px;"></div>
     </div>
     <div style="text-align:center; width:22%;">
       <div style="border-top:2px solid #000; width:100%; margin-bottom:5px; height:40px;"></div>
       <div style="font-weight:bold;">Checked By:</div>
-      <div style="font-size:10px;">Name and Signature</div>
+      <div id="p_pr_checked" style="font-size:10px;"></div>
     </div>
     <div style="text-align:center; width:22%;">
       <div style="border-top:2px solid #000; width:100%; margin-bottom:5px; height:40px;"></div>
       <div style="font-weight:bold;">Recommending Approval:</div>
-      <div style="font-size:10px;">Name and Signature</div>
+      <div id="p_pr_recommend" style="font-size:10px;"></div>
     </div>
     <div style="text-align:center; width:22%;">
       <div style="border-top:2px solid #000; width:100%; margin-bottom:5px; height:40px;"></div>
       <div style="font-weight:bold;">Approved by:</div>
-      <div style="font-size:10px;">Name and Signature</div>
+      <div id="p_pr_approved" style="font-size:10px;"></div>
     </div>
   </div>
 </div>

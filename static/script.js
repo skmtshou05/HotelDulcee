@@ -1351,9 +1351,15 @@ function generatePRPdfFromForm() {
   }
 
   document.getElementById("p_pr_no").textContent = document.getElementById("pr-no").value || '';
+  document.getElementById("p_pr_remarks").textContent = document.getElementById("pr-remarks").value || '';
   document.getElementById("p_pr_requester").textContent = document.getElementById("pr-requester").value || '';
   document.getElementById("p_pr_dept").textContent = document.getElementById("pr-dept").value || '';
   document.getElementById("p_pr_date_needed").textContent = document.getElementById("pr-needed").value || '';
+  // populate signature placeholders from form
+  if (document.getElementById("p_pr_requested")) document.getElementById("p_pr_requested").textContent = document.getElementById("pr-requested-by").value || '';
+  if (document.getElementById("p_pr_checked")) document.getElementById("p_pr_checked").textContent = document.getElementById("pr-checked-by").value || '';
+  if (document.getElementById("p_pr_recommend")) document.getElementById("p_pr_recommend").textContent = document.getElementById("pr-recommend-approval").value || '';
+  if (document.getElementById("p_pr_approved")) document.getElementById("p_pr_approved").textContent = document.getElementById("pr-approved-by").value || '';
 
   const tbody = document.getElementById("p_pr_items");
   tbody.innerHTML = "";
@@ -1529,6 +1535,10 @@ async function downloadPOFromDB(id) {
     document.getElementById("po-contact-person").value = po.contact_person || '';
     document.getElementById("po-contact-number").value = po.contact_number || '';
 
+    document.getElementById("po-prepared-by").value = po.prepared_by || '';
+    document.getElementById("po-checked-by").value = po.checked_by || '';
+    document.getElementById("po-approved-by").value = po.approved_by || '';
+
     document.getElementById("po-items").innerHTML = '';
     if (Array.isArray(po.items) && po.items.length > 0) {
       po.items.forEach(it => {
@@ -1560,6 +1570,11 @@ async function editPR(id) {
     set('pr-requester', pr.requester);
     set('pr-dept', pr.dept);
     set('pr-needed', pr.date_needed);
+    // populate signature inputs when editing
+    set('pr-requested-by', pr.requested_by || '');
+    set('pr-checked-by', pr.checked_by || '');
+    set('pr-recommend-approval', pr.recommend_approval || '');
+    set('pr-approved-by', pr.approved_by || '');
 
     // items
     const itemsEl = document.getElementById('pr-items');
@@ -1619,6 +1634,26 @@ async function downloadPRFromDB(id) {
     setText('p_pr_requester', pr.requester || '');
     setText('p_pr_dept', pr.dept || '');
     setText('p_pr_date_needed', pr.date_needed || '');
+    // also populate form fields so generatePRPdfFromForm reads them
+    const setInput = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+    // core form values
+    setInput('pr-no', pr.no || '');
+    setInput('pr-date', pr.date || '');
+    setInput('pr-requester', pr.requester || '');
+    setInput('pr-dept', pr.dept || '');
+    setInput('pr-needed', pr.date_needed || '');
+    setInput('pr-remarks', pr.remarks || '');
+    // signature inputs
+    setInput('pr-requested-by', pr.requested_by || '');
+    setInput('pr-checked-by', pr.checked_by || '');
+    setInput('pr-recommend-approval', pr.recommend_approval || '');
+    setInput('pr-approved-by', pr.approved_by || '');
+
+    // also populate print-only placeholders for the fast download path
+    setText('p_pr_requested', pr.requested_by || '');
+    setText('p_pr_checked', pr.checked_by || '');
+    setText('p_pr_recommend', pr.recommend_approval || '');
+    setText('p_pr_approved', pr.approved_by || '');
 
     const tbody = document.getElementById('p_pr_items');
     if (tbody) {
@@ -1628,7 +1663,11 @@ async function downloadPRFromDB(id) {
         try { items = JSON.parse(items); } catch(e) { items = []; }
       }
       if (Array.isArray(items) && items.length) {
+        // populate both the print-only table AND the editable form rows
+        const formItemsEl = document.getElementById('pr-items');
+        if (formItemsEl) formItemsEl.innerHTML = '';
         items.forEach(it => {
+          if (typeof prAddItem === 'function') prAddItem(it.stk || '', it.qty || 0, it.unit || '', it.desc || it.description || '', it.remark || it.remarks || '');
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td style="border:1px solid #000; padding:6px;">${it.stk || ''}</td>
@@ -1724,6 +1763,11 @@ async function savePR() {
   const dept = document.getElementById('pr-dept').value;
   const date_needed = document.getElementById('pr-needed').value;
   const remarks = document.getElementById('pr-remarks').value || '';
+  // signature fields
+  const requested_by = document.getElementById('pr-requested-by')?.value || '';
+  const checked_by = document.getElementById('pr-checked-by')?.value || '';
+  const recommend_approval = document.getElementById('pr-recommend-approval')?.value || '';
+  const approved_by = document.getElementById('pr-approved-by')?.value || '';
 
   const items = [];
   document.querySelectorAll('#pr-items tr').forEach((row, idx) => {
@@ -1736,7 +1780,7 @@ async function savePR() {
     items.push({ stk, qty, unit, desc, description: desc, remark, remarks: remark });
   });
 
-  const pr = { no, date, requester, dept, date_needed, remarks, items };
+  const pr = { no, date, requester, dept, date_needed, remarks, requested_by, checked_by, recommend_approval, approved_by, items };
 
   try {
     // try server save first
@@ -1749,6 +1793,12 @@ async function savePR() {
         editingPRId = null;
       }
       const localId = generateId('pr');
+      // ensure signature fields are preserved in cached copy even if server response omitted them
+      serverResp.requested_by = serverResp.requested_by || requested_by;
+      serverResp.checked_by = serverResp.checked_by || checked_by;
+      serverResp.recommend_approval = serverResp.recommend_approval || recommend_approval;
+      serverResp.approved_by = serverResp.approved_by || approved_by;
+      serverResp.remarks = serverResp.remarks || remarks;
       serverResp.local_id = localId;
       serverResp.id = localId;
       list.push(serverResp);
@@ -1930,6 +1980,10 @@ function prPrepare() {
   if (el('pr-dept')) el('pr-dept').value = '';
   if (el('pr-needed')) el('pr-needed').value = '';
   if (el('pr-remarks')) el('pr-remarks').value = '';
+  if (el('pr-requested-by')) el('pr-requested-by').value = '';
+  if (el('pr-checked-by')) el('pr-checked-by').value = '';
+  if (el('pr-recommend-approval')) el('pr-recommend-approval').value = '';
+  if (el('pr-approved-by')) el('pr-approved-by').value = '';
   if (el('pr-items')) el('pr-items').innerHTML = '';
   // add first empty item row if helper exists
   if (typeof prAddItem === 'function') prAddItem();
